@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'sriatmakuri/app.py'
+        IMAGE_NAME = 'sriatmakuri/flask-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         REGISTRY_CREDENTIALS = 'dockerhub-creds' // Configure in Jenkins Credentials
     }
@@ -26,7 +26,8 @@ pipeline {
         stage('Test') {
             steps {
                 sh 'pip install -r requirements.txt'
-                sh 'pytest tests/' // or your test runner
+                sh 'pip install pytest'
+                sh 'pytest tests/'
             }
         }
 
@@ -43,9 +44,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh """
-                    docker stop app.py || true
-                    docker rm app.py || true
-                    docker run -d --name app.py -p 5000:5000 ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker stop flask-app || true
+                    docker rm flask-app || true
+                    docker run -d --name flask-app -p 5000:5000 ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
         }
