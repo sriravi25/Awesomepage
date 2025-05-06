@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'your-dockerhub-username/flask-app'
+        IMAGE_NAME = 'sriatmakuri/app.py'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         REGISTRY_CREDENTIALS = 'dockerhub-creds' // Configure in Jenkins Credentials
     }
@@ -11,7 +11,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-org/your-flask-repo.git'
+                git 'https://github.com/sriravi25/app.py'
             }
         }
 
@@ -42,10 +42,14 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "Deploying ${IMAGE_NAME}:${IMAGE_TAG}..."
-                // Add kubectl/SSH deployment commands here
+                sh """
+                    docker stop app.py || true
+                    docker rm app.py || true
+                    docker run -d --name app.py -p 5000:5000 ${IMAGE_NAME}:${IMAGE_TAG}
+                """
             }
         }
+
     }
 
     post {
