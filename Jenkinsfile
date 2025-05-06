@@ -2,47 +2,55 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_DIR = "/var/www/html"
+        IMAGE_NAME = 'your-dockerhub-username/flask-app'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        REGISTRY_CREDENTIALS = 'dockerhub-creds' // Configure in Jenkins Credentials
     }
 
     stages {
-        stage('Checkout Code') {
+
+        stage('Checkout') {
             steps {
-                git url: 'https://github.com/your-username/your-repo.git', branch: 'main'
+                git 'https://github.com/your-org/your-flask-repo.git'
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                echo "Static site — no build step needed."
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                }
             }
         }
 
         stage('Test') {
             steps {
-                echo "No automated tests for static page. Skipping..."
-                // You can integrate lighthouse or htmlhint for checks
+                sh 'pip install -r requirements.txt'
+                sh 'pytest tests/' // or your test runner
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${REGISTRY_CREDENTIALS}") {
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Deploying to $DEPLOY_DIR"
-                // Ensure Jenkins has permissions to copy files to this dir
-                sh '''
-                    sudo rm -rf $DEPLOY_DIR/*
-                    sudo cp -r * $DEPLOY_DIR/
-                '''
+                echo "Deploying ${IMAGE_NAME}:${IMAGE_TAG}..."
+                // Add kubectl/SSH deployment commands here
             }
         }
     }
 
     post {
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Something went wrong...'
+        always {
+            cleanWs()
         }
     }
 }
