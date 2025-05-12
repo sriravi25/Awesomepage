@@ -11,7 +11,9 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/sriravi25/app.py'
+                git 'https://github.com/sriravi25/app.py',
+                    branch: 'main'
+                
             }
         }
 
